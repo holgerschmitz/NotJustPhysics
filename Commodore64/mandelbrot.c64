@@ -1,3 +1,7 @@
+10 rem written by
+20 rem joseph dewey
+30 rem http://semioriginalthought.blogspot.co.uk/
+40 rem 2012/04/how-to-simply-create-mandelbrot-set-on.html
 90 rem **to change the shape, change**
 91 rem **xl,xu,yl,yu. reps changes  **
 92 rem **the resolution**
