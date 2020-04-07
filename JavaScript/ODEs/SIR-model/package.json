@@ -1,0 +1,27 @@
+{
+  "name": "sir-model",
+  "version": "1.0.0",
+  "description": "Numerical integration of the SIR epidemics model",
+  "main": "index.js",
+  "scripts": {
+    "build": "webpack --mode production"
+  },
+  "author": "Holger Schmitz",
+  "license": "MIT",
+  "devDependencies": {
+    "@babel/core": "^7.9.0",
+    "@babel/preset-env": "^7.9.0",
+    "@babel/preset-react": "^7.9.4",
+    "babel-loader": "^8.1.0",
+    "webpack": "^4.42.1",
+    "webpack-cli": "^3.3.11"
+  },
+  "dependencies": {
+    "@material-ui/core": "^4.9.9",
+    "ode-rk4": "^1.1.3",
+    "plotly.js": "^1.53.0",
+    "react": "^16.13.1",
+    "react-dom": "^16.13.1",
+    "react-plotly.js": "^2.4.0"
+  }
+}

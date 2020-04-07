@@ -32,3 +32,5 @@
 *.app
 
 .project
+.vscode
+node_modules

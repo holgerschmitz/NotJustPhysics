@@ -1,5 +1,6 @@
 #include <iostream>
 #include <bitset>
+#include <limits>
 
 void binaryDouble(double num) {
   long *lnum = (long*)&num;
@@ -11,8 +12,10 @@ void binaryLong(long num) {
 }
 
 int main() {
+  std::cout << "C++ integer types:" << std::endl;
+  std::cout << "int: " << sizeof(int) << " " << std::numeric_limits<int>::min << " " << std::numeric_limits<int>::max << std::endl;
   while (std::cin) {
-    double num;
+    long num;
     std::cout << "Enter a number: ";
     std::cin >> num;
     binaryDouble(num);
