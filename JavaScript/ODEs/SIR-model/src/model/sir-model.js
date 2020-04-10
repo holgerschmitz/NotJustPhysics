@@ -5,7 +5,7 @@ export class SIRModel {
     this.beta = 1;
     this.gamma = 1;
     this.tmax = 30;
-    this.dt = 0.01;
+    this.dt = 0.1;
 
     const Istart = 0.01;
     this.initialConditions = {
@@ -15,11 +15,6 @@ export class SIRModel {
     };
 
     this.solution = [];
-    this.callbacks = [];
-  }
-
-  onDone(cb) {
-    this.callbacks.push(cb);
   }
 
   getRHS() {
@@ -35,16 +30,12 @@ export class SIRModel {
   integrate() {
     const y = [this.initialConditions.S, this.initialConditions.I, this.initialConditions.R];
     this.solution = [];
-    this.solution.push(y);
+    this.solution.push([...y]);
 
     const integrator = rk4(y, this.getRHS(), 0, this.dt);
     while(integrator.t < this.tmax) {
       integrator.step();
-      this.solution.push(integrator.y);
-    }
-
-    for (cb of this.callbacks) {
-      cb(this.solution);
+      this.solution.push([...integrator.y]);
     }
   }
 }
