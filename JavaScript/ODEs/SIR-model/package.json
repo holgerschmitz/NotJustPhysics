@@ -4,7 +4,7 @@
   "description": "Numerical integration of the SIR epidemics model",
   "main": "index.js",
   "scripts": {
-    "build": "webpack --mode production"
+    "build": "webpack --mode development"
   },
   "author": "Holger Schmitz",
   "license": "MIT",

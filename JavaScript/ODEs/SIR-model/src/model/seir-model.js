@@ -61,6 +61,7 @@ export class SEIRModel {
   getRHS() {
     const beta = this.beta;
     const gamma = this.gamma;
+    const a = this.a;
     return (dydt, y, t) => {
       dydt[0] = -beta*y[0]*y[1];
       dydt[1] =  beta*y[0]*y[1] - a*y[1];

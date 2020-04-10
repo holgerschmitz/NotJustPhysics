@@ -1,101 +1,64 @@
 import React, { Component } from "react";
-import Slider from '@material-ui/core/Slider';
-import { Chart } from 'react-charts'
 
 import { SIRModel } from '../model/sir-model';
+import { SEIRModel } from '../model/seir-model';
+import { Model } from './Model';
+
+import InputLabel from '@material-ui/core/InputLabel';
+import MenuItem from '@material-ui/core/MenuItem';
+import FormControl from '@material-ui/core/FormControl';
+import Select from '@material-ui/core/Select';
 
 export class App extends Component {
   constructor() {
     super();
-
-    this.model = new SIRModel();
-    this.model.tmax = 30;
-    this.model.dt = 0.05;
-
-    this.model.integrate();
-
     this.state = {
-      data: this.makeChartData(this.model.solution),
-    };
-
-    for (const parameter of this.model.definition.parameters) {
-      this.state[parameter.name] = this.model[parameter.name];
+      model: 'sir',
     }
   }
 
-  integrateModel() {
-    this.model.beta = this.state.beta;
-    this.model.gamma = this.state.gamma;
-    this.model.integrate(this.updateData.bind(this));
-  }
-
-  handleParameterChange(name, event, newValue) {
-    const newState = {};
-    newState[name] = newValue;
-    this.setState(newState);
-    
-    this.model[name] = newValue;
-    this.model.integrate();
-    this.updateData();
-  }
-
-  makeChartData(solution) {
-    const data = this.model.definition.output.map(spec => (
-      {
-        label: spec.name,
-        data: []
-      }
-    ));
-    let it = 0;
-    const n = this.model.definition.output.length;
-    for (const y of solution) {
-      if (it %10 === 0) {
-        const t = it*this.model.dt;
-        for (let i=0; i<n; i++) {
-          data[i].data.push([t, y[i]]);
-        }
-      }
-      it++;
-    }
-    return data;
-  }
-
-  updateData() {
+  handleModelChange(event) {
     this.setState({
-      data: this.makeChartData(this.model.solution)
+      model: event.target.value,
+      modelFactory: this.getModelFactory(event.target.value)
     });
   }
 
-  makeSliders() {
-    return this.model.definition.parameters.map(parameter => (
-      <label>{parameter.description}: {this.state[parameter.name]}
-        <Slider 
-          value={this.state[parameter.name]} 
-          onChange={this.handleParameterChange.bind(this, parameter.name)} 
-          min={parameter.min}
-          step={parameter.step}
-          max={parameter.max}
-          aria-labelledby="continuous-slider" />
-      </label>
-    ));
+  getModelFactory(model) {
+    switch (model) {
+      case 'seir': 
+        return () => new SEIRModel();
+      case 'sir':
+      default:
+        return () => new SIRModel();
+    }
+  }
+
+  getModelComponent(model) {
+    if (this.state.model === model) {
+      return (<Model model={this.getModelFactory(model)} />)
+    }
+    return (<span />);
   }
 
   render() {
-    const axes = [
-      { primary: true, type: 'linear', position: 'bottom' },
-      { type: 'linear', position: 'left' }
-    ];
-    const sliders = this.makeSliders();
     return (
       <div>
-        <h3>The SIR Model for the spread of infectious diseases</h3>
-        {sliders}
-        <div  style={{
-          width: '100%',
-          height: '500px'
-        }}>
-          <Chart data={this.state.data} axes={axes} />
-        </div>
+        <h3>Modeling Epidemics</h3>
+        <FormControl>
+          <InputLabel id="model-select-label">Model</InputLabel>
+          <Select
+            labelId="model-select-label"
+            id="model-select"
+            value={this.state.model}
+            onChange={this.handleModelChange.bind(this)}
+          >
+            <MenuItem value='sir'>SIR Model</MenuItem>
+            <MenuItem value='seir'>SEIR Model</MenuItem>
+          </Select>
+        </FormControl>
+        {this.getModelComponent('sir')}
+        {this.getModelComponent('seir')}
       </div>
     );
   }
