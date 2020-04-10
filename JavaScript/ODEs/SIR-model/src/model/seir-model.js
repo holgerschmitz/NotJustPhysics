@@ -1,12 +1,19 @@
 var rk4 = require('ode-rk4');
  
-export class SIRModel {
+export class SEIRModel {
   constructor() {
     this.definition = {
       parameters: [
         { 
           name: 'beta',
           description: 'Infection Rate',
+          min: 0.0,
+          max: 10.0,
+          step: 0.01
+        },
+        { 
+          name: 'a',
+          description: 'Incubation Rate (inverse of the average incubation period)',
           min: 0.0,
           max: 10.0,
           step: 0.01
@@ -24,6 +31,9 @@ export class SIRModel {
           name: 'S'
         },
         {
+          name: 'E'
+        },
+        {
           name: 'I'
         },
         {
@@ -31,16 +41,17 @@ export class SIRModel {
         }
       ]
     };
-
+    
     this.beta = 1;
     this.gamma = 0.5;
     this.tmax = 30;
     this.dt = 0.1;
 
-    const Istart = 0.01;
+    const Estart = 0.01;
     this.initialConditions = {
-      S: 1-Istart,
-      I: Istart,
+      S: 1-Estart,
+      E: Estart,
+      I: 0,
       R: 0
     };
 
@@ -52,13 +63,14 @@ export class SIRModel {
     const gamma = this.gamma;
     return (dydt, y, t) => {
       dydt[0] = -beta*y[0]*y[1];
-      dydt[1] =  beta*y[0]*y[1] - gamma*y[1];
-      dydt[2] =                   gamma*y[1];      
+      dydt[1] =  beta*y[0]*y[1] - a*y[1];
+      dydt[2] =  a*y[1] - gamma*y[2];
+      dydt[3] =           gamma*y[2];      
     }
   }
 
   integrate() {
-    const y = [this.initialConditions.S, this.initialConditions.I, this.initialConditions.R];
+    const y = [this.initialConditions.S, this.initialConditions.E, this.initialConditions.I, this.initialConditions.R];
     this.solution = [];
     this.solution.push([...y]);
 

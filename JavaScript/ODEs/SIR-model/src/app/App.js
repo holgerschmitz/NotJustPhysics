@@ -8,21 +8,19 @@ export class App extends Component {
   constructor() {
     super();
 
-    this.handleChangeBeta = this.handleChangeBeta.bind(this);
-    this.handleChangeGamma = this.handleChangeGamma.bind(this);
     this.model = new SIRModel();
     this.model.tmax = 30;
     this.model.dt = 0.05;
-    this.model.beta = 1;
-    this.model.gamma = 0.5;
 
     this.model.integrate();
 
     this.state = {
-      beta: this.model.beta,
-      gamma: this.model.gamma,
       data: this.makeChartData(this.model.solution),
     };
+
+    for (const parameter of this.model.definition.parameters) {
+      this.state[parameter.name] = this.model[parameter.name];
+    }
   }
 
   integrateModel() {
@@ -31,48 +29,32 @@ export class App extends Component {
     this.model.integrate(this.updateData.bind(this));
   }
 
-  handleChangeBeta(event, newValue) {
-    this.setState(() => ({
-        beta: newValue
-    }));
-    this.model.beta = newValue;
-    this.model.integrate();
-    this.updateData();
-  }
-
-  handleChangeGamma(event, newValue) {
-    this.setState(() => ({
-      gamma: newValue
-    }));
-    this.model.gamma = newValue;
+  handleParameterChange(name, event, newValue) {
+    const newState = {};
+    newState[name] = newValue;
+    this.setState(newState);
+    
+    this.model[name] = newValue;
     this.model.integrate();
     this.updateData();
   }
 
   makeChartData(solution) {
-    const data = [
+    const data = this.model.definition.output.map(spec => (
       {
-        label: 'S',
+        label: spec.name,
         data: []
-      },
-      {
-        label: 'I',
-        data: []
-      },
-      {
-        label: 'R',
-        data: []
-      },
-    ];
-    let t=0;
+      }
+    ));
     let it = 0;
+    const n = this.model.definition.output.length;
     for (const y of solution) {
       if (it %10 === 0) {
-        data[0].data.push([t, y[0]]);
-        data[1].data.push([t, y[1]]);
-        data[2].data.push([t, y[2]]);
+        const t = it*this.model.dt;
+        for (let i=0; i<n; i++) {
+          data[i].data.push([t, y[i]]);
+        }
       }
-      t += this.model.dt - 1e-9;
       it++;
     }
     return data;
@@ -84,32 +66,30 @@ export class App extends Component {
     });
   }
 
+  makeSliders() {
+    return this.model.definition.parameters.map(parameter => (
+      <label>{parameter.description}: {this.state[parameter.name]}
+        <Slider 
+          value={this.state[parameter.name]} 
+          onChange={this.handleParameterChange.bind(this, parameter.name)} 
+          min={parameter.min}
+          step={parameter.step}
+          max={parameter.max}
+          aria-labelledby="continuous-slider" />
+      </label>
+    ));
+  }
+
   render() {
     const axes = [
       { primary: true, type: 'linear', position: 'bottom' },
       { type: 'linear', position: 'left' }
     ];
+    const sliders = this.makeSliders();
     return (
       <div>
         <h3>The SIR Model for the spread of infectious diseases</h3>
-        <label>Infection Rate: {this.state.beta}
-          <Slider 
-            value={this.state.beta} 
-            onChange={this.handleChangeBeta} 
-            min={0.0}
-            step={0.01}
-            max={10}
-            aria-labelledby="continuous-slider" />
-        </label>
-        <label>Recovery Rate: {this.state.gamma}
-          <Slider 
-            value={this.state.gamma} 
-            onChange={this.handleChangeGamma} 
-            min={0.0}
-            step={0.01}
-            max={10}
-            aria-labelledby="continuous-slider" /> 
-        </label>
+        {sliders}
         <div  style={{
           width: '100%',
           height: '500px'
