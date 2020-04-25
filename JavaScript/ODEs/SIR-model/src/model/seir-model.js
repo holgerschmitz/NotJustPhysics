@@ -22,7 +22,7 @@ export class SEIRModel {
           name: 'gamma',
           description: 'Recovery Rate',
           min: 0.0,
-          max: 10.0,
+          max: 2.0,
           step: 0.01
         }
       ],
@@ -44,6 +44,7 @@ export class SEIRModel {
     
     this.beta = 1;
     this.gamma = 0.5;
+    this.a = 1;
     this.tmax = 30;
     this.dt = 0.1;
 
@@ -63,8 +64,8 @@ export class SEIRModel {
     const gamma = this.gamma;
     const a = this.a;
     return (dydt, y, t) => {
-      dydt[0] = -beta*y[0]*y[1];
-      dydt[1] =  beta*y[0]*y[1] - a*y[1];
+      dydt[0] = -beta*y[0]*y[2];
+      dydt[1] =  beta*y[0]*y[2] - a*y[1];
       dydt[2] =  a*y[1] - gamma*y[2];
       dydt[3] =           gamma*y[2];      
     }

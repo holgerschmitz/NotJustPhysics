@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import Slider from '@material-ui/core/Slider';
-import { Chart } from 'react-charts'
+import { Chart } from 'react-charts';
 
 import { SIRModel } from '../model/sir-model';
 
@@ -51,7 +51,7 @@ export class Model extends Component {
       if (it %10 === 0) {
         const t = it*this.model.dt;
         for (let i=0; i<n; i++) {
-          data[i].data.push([t, y[i]]);
+          data[i].data.push([t, 100*y[i]]);
         }
       }
       it++;
@@ -81,19 +81,29 @@ export class Model extends Component {
 
   render() {
     const axes = [
-      { primary: true, type: 'linear', position: 'bottom' },
-      { type: 'linear', position: 'left' }
+      { primary: true, type: 'linear', position: 'bottom'},
+      { 
+        type: 'linear', 
+        position: 'left', 
+        format: (val) => {
+          return (parseFloat(val)/100).toString();
+        } 
+      }
     ];
+    const tooltip = {align: "auto", anchor: "closest"};
     const sliders = this.makeSliders();
     return (
       <div>
-        <h3>The SIR Model for the spread of infectious diseases</h3>
         {sliders}
         <div  style={{
           width: '100%',
           height: '500px'
         }}>
-          <Chart data={this.state.data} axes={axes} />
+          <Chart 
+            data={this.state.data} 
+            axes={axes} 
+            tooltip={tooltip}
+          />
         </div>
       </div>
     );
