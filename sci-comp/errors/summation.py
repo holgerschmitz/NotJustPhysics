@@ -6,8 +6,7 @@ def factorial(n):
   for i in range(2, n+1):
     prod = prod * i
   
-  return prod;
-}
+  return prod
 
 # using Taylor series of arctan(1)
 def pi_summation_slow(N):
@@ -29,14 +28,14 @@ def pi_summation_slow(N):
 # $$
 # \frac{\pi}{4} = 4 \arctan\frac{1}{5} - \arctan\frac{1}{239}
 # $$
-def pi_summation_fast_overflow(N):
+def pi_summation_fast(N):
   sum = 0.0
 
-  for i in range(0,N):
+  for n in range(0,N):
     f = factorial(n)
-    common = Math.pow(2.0, 2*n)*f*f/factorial(2*n + 1)
-    const A = Math.pow(25/26, n+1)/Math.pow(5, 2*n+1)
-    const B = Math.pow(239*239 / (239*239 + 1), n+1)/Math.pow(239, 2*n+1)
+    common = math.pow(2.0, 2*n)*f*f/factorial(2*n + 1)
+    A = math.pow(25/26, n+1)/math.pow(5, 2*n+1)
+    B = math.pow(239*239 / (239*239 + 1), n+1)/math.pow(239, 2*n+1)
     sum = sum + common*( 4*A - B )
 
   return 4*sum;
@@ -47,8 +46,8 @@ def taylor_sin(x, N):
   sum = 0.0
   sign = 1
 
-  for i in range(0,N):
-    sum = sum + sign*Math.pow(x, 2*n + 1)/factorial(2*n + 1)
+  for n in range(0,N):
+    sum = sum + sign*math.pow(x, 2*n + 1)/factorial(2*n + 1)
     sign = -sign
 
   return sum
@@ -65,3 +64,6 @@ def taylor_sin_opt(x, N):
 
   return sum
 
+
+for n in range(1,100):
+  print(n, taylor_sin(math.pi*(10+ 1/6.0), n))
