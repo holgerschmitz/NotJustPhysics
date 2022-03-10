@@ -34,3 +34,9 @@
 .project
 .vscode
 node_modules
+
+# Images and Figures
+*.eps
+*.pdf
+*.png
+

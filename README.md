@@ -1,3 +1,5 @@
+[![Support Ukraine Badge](https://bit.ly/support-ukraine-now)](https://github.com/support-ukraine/support-ukraine)
+
 # NotJustPhysics
 
 This repository contains code snippets from the [NotJustPhysics blog](https://notjustphysics.com/blog) and other bits and pieces that I am trying out.
