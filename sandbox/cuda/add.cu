@@ -1,14 +1,21 @@
 #include <iostream>
 #include <math.h>
+
 // Kernel function to add the elements of two arrays
 __global__
 void add(int n, float *x, float *y)
-{
-  int index = blockIdx.x * blockDim.x + threadIdx.x;
-  int stride = blockDim.x * gridDim.x;
-  for (int i = index; i < n; i += stride)
+{ 
+  int delta = n / (blockDim.x * gridDim.x) + 1;
+  int start = delta*(blockIdx.x * blockDim.x + threadIdx.x);
+  int end = start + delta;
+  if (end>n) {
+    end = n;
+  }
+  for (int i = start; i < end; ++i) {
     y[i] = x[i] + y[i];
+  }
 }
+
 int main(void)
 {
   int N = 1<<26;
