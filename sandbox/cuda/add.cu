@@ -3,7 +3,7 @@
 
 // Kernel function to add the elements of two arrays
 __global__
-void add(int n, float dx, float *x, float *y)
+void add(int n, int a0, int a1, int s0, int s1, int d0, int d1, float dx, float *x, float *y)
 { 
   int delta = n / (blockDim.x * gridDim.x) + 1;
   int start = delta*(blockIdx.x * blockDim.x + threadIdx.x);
@@ -11,8 +11,25 @@ void add(int n, float dx, float *x, float *y)
   if (end >= n) {
     end = n - 1;
   }
-  for (int i = start; i < end; ++i) {
-    y[i] = (x[i+1] - x[i]) / dx;
+  
+  int p0 = start % a0 + s0;
+  int q0 = start / a0;
+  int p1 = q0 % a1 + s1;
+
+  int skip0 = d0 - s0 - a0;
+  int t0 = s0 + a0;
+
+  int j = p0 + d0*p1;
+
+  int i = start;
+  while (i < end) {
+    
+    y[j] = (x[j+1] + x[j-1] + x[j+d0] + x[j-d0] - 4*x[j]) / (dx*dx);
+    
+    ++i;
+    if (++j >= t0) {
+      j += skip0;
+    }
   }
 }
 
