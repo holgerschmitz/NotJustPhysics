@@ -2,6 +2,11 @@
 #include <math.h>
 
 template<int rank>
+struct Array {
+  int val[rank];
+};
+
+template<int rank>
 struct GridStride {
   int a[rank];
   int s[rank];
@@ -14,6 +19,23 @@ struct GridStride {
       result *= a[i];
     }
     return result;
+  }
+
+  __host__ __device__
+  void innerPosFromInnerCount(int count, int (&pos)[rank]) {
+    for (int i=rank-1; i>=0; --i) {
+      pos[i] = count % a[i];
+      count = count / a[i];
+    }
+  }
+
+  __host__ __device__
+  int outerCountFromInnerPos(int pos[rank]) {
+    int count = pos[0] + s[0];
+    for (int i=1; i<rank; ++i) {
+      count = count*d[i-1] + pos[i] + s[i];
+    } 
+    return count;
   }
 };
 
@@ -29,6 +51,9 @@ void add(GridStride<2> stride, float dx, float *x, float *y)
     end =  nIter;
   }
   
+  int innerPos[2];
+  stride.innerPosFromInnerCount(start, innerPos);
+
   int p0 = start % stride.a[0] + stride.s[0];
   int q0 = start / stride.a[0];
   int p1 = q0 % stride.a[1] + stride.s[1];
@@ -36,7 +61,7 @@ void add(GridStride<2> stride, float dx, float *x, float *y)
   int skip0 = stride.d[0] - stride.s[0] - stride.a[0];
   int t0 = stride.s[0] + stride.a[0];
 
-  int j = p0 + stride.d[0]*p1;
+  int j = stride.outerCountFromInnerPos(innerPos);
 
   int i = start;
   while (i < end) {
