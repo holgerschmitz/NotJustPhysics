@@ -6,13 +6,22 @@ struct GridStride {
   int a[rank];
   int s[rank];
   int d[rank];
+
+  __host__ __device__
+  int getInnerCount() {
+    int result = a[0];
+    for (int i=1; i<rank; ++i) {
+      result *= a[i];
+    }
+    return result;
+  }
 };
 
 // Kernel function to add the elements of two arrays
 __global__
 void add(GridStride<2> stride, float dx, float *x, float *y)
 { 
-  int nIter = stride.a[0]*stride.a[1];
+  int nIter = stride.getInnerCount();
   int delta = nIter / (blockDim.x * gridDim.x) + 1;
   int start = delta*(blockIdx.x * blockDim.x + threadIdx.x);
   int end = start + delta;
