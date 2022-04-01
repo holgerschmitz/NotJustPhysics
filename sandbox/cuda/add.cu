@@ -24,7 +24,7 @@ void add(int a0, int a1, int s0, int s1, int d0, int d1, float dx, float *x, flo
   int i = start;
   while (i < end) {
     
-    y[j] = x[j]; //(x[j+1] + x[j-1] + x[j+d0] + x[j-d0] - 4*x[j]) / (dx*dx);
+    y[j] = (x[j+1] + x[j-1] + x[j+d0] + x[j-d0] - 4*x[j]) / (dx*dx); // + x[j+d0] + x[j-d0] - 4*x[j]) / (dx*dx);
     
     ++i;
     if (++j >= t0) {
@@ -35,17 +35,17 @@ void add(int a0, int a1, int s0, int s1, int d0, int d1, float dx, float *x, flo
 
 template<typename T>
 T testFunc(T x, T y) {
-//  float r2 = x*x + y*y;
-//  return exp(-r2);
-    return 10000*x + y;
+  float r2 = x*x + y*y;
+  return exp(-r2);
+//    return 10000*x + y;
 }
 
 int main(void)
 {
-  int D = 1<<4;
+  int D = 1<<10;
   int N = D*D;
   float *x, *y;
-  float dx = 1.0f; // float(4.0f/D);
+  float dx = float(4.0f/D);
 
   // Allocate Unified Memory – accessible from CPU or GPU
   cudaMallocManaged(&x, N*sizeof(float));
@@ -72,17 +72,23 @@ int main(void)
 
   // Check for errors
   float maxError = -1.0f;
+  float comparedTo;
   int maxI, maxJ;
 
   for (int i = 0; i < D; ++i) {
     for (int j = 0; j < D; ++j) {
 //      float r2 = (i*i + j*j)*dx*dx;
 //      float expected = (i<4 || j<4 || i>=D-4 || j>=D-4) ? 0.0f : 4.0f*(r2 - 1)*exp(-r2);
-      float expected = (i<4 || j<4 || i>=D-4 || j>=D-4) ? 0.0f : testFunc(i*dx, j*dx);
+      float expected = (i<4 || j<4 || i>=D-4 || j>=D-4) ? 0.0f : (
+        testFunc<float>(i*dx - dx, j*dx) + testFunc<float>(i*dx + dx, j*dx) + 
+        testFunc<float>(i*dx, j*dx - dx) + testFunc<float>(i*dx, j*dx + dx) 
+        - 4.0*testFunc(i*dx, j*dx)
+      ) /(dx*dx);
     
       float err = fabs(y[i*D + j] - expected);
       if (err > maxError) {
         maxError = err;
+        comparedTo = expected;
         maxI = i;
         maxJ = j;
       }
@@ -90,14 +96,16 @@ int main(void)
     }
   }
 
-  std::cout << "Max error: " << maxError << " " << maxI << " " << maxJ << " " << y[maxI*D + maxJ] << std::endl;
+  std::cout << "Max error: " << maxError << " " << maxI << " " << maxJ << " " << y[maxI*D + maxJ] << " " << comparedTo << std::endl;
 
   float xf = maxI*dx;
   float yf = maxJ*dx;
 
-  float expectedAtMax = testFunc(xf, yf); 
-// (testFunc(xf - dx, yf) + testFunc(xf + dx, yf) + testFunc(xf, yf - dx) + testFunc(xf, yf + dx)
-//    - 4.0*testFunc(xf, yf))/(dx*dx);
+  float expectedAtMax = // testFunc(xf - dx, yf); 
+( testFunc(xf - dx, yf) + testFunc(xf + dx, yf) + 
+  testFunc(xf, yf - dx) + testFunc(xf, yf + dx)
+  - 4.0*testFunc(xf, yf)
+)/(dx*dx);
 
   std::cout << "Expected value: " << expectedAtMax << std::endl;
 
@@ -105,9 +113,11 @@ int main(void)
   double xd = maxI*dx;
   double yd = maxJ*dx;
   
-  double precise = testFunc(xd, yd); 
-// (testFunc(xd - dx, yd) + testFunc(xd + dx, yd) + testFunc(xd, yd - dx) + testFunc(xd, yd + dx) 
-//    - 4.0*testFunc(xd, yd))/(double(dx)*double(dx));
+  double precise = // testFunc(xd - dx, yd); 
+( testFunc(xd - dx, yd) + testFunc(xd + dx, yd) + 
+  testFunc(xd, yd - dx) + testFunc(xd, yd + dx) 
+  - 4.0*testFunc(xd, yd)
+)/(double(dx)*double(dx));
 
   std::cout << "Better value: " << precise << std::endl;
   // Free memory
