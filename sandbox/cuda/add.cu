@@ -8,15 +8,15 @@ struct Array {
 
 template<int rank>
 struct GridStride {
-  int a[rank];
-  int s[rank];
-  int d[rank];
+  int innerDim[rank];
+  int offset[rank];
+  int outerDim[rank];
 
   __host__ __device__
   int getInnerCount() {
-    int result = a[0];
+    int result = innerDim[0];
     for (int i=1; i<rank; ++i) {
-      result *= a[i];
+      result *= innerDim[i];
     }
     return result;
   }
@@ -24,16 +24,16 @@ struct GridStride {
   __host__ __device__
   void innerPosFromInnerCount(int count, int (&pos)[rank]) {
     for (int i=rank-1; i>=0; --i) {
-      pos[i] = count % a[i];
-      count = count / a[i];
+      pos[i] = count % innerDim[i];
+      count = count / innerDim[i];
     }
   }
 
   __host__ __device__
   int outerCountFromInnerPos(int pos[rank]) {
-    int count = pos[0] + s[0];
+    int count = pos[0] + offset[0];
     for (int i=1; i<rank; ++i) {
-      count = count*d[i-1] + pos[i] + s[i];
+      count = count*outerDim[i-1] + pos[i] + offset[i];
     } 
     return count;
   }
@@ -54,19 +54,15 @@ void add(GridStride<2> stride, float dx, float *x, float *y)
   int innerPos[2];
   stride.innerPosFromInnerCount(start, innerPos);
 
-  int p0 = start % stride.a[0] + stride.s[0];
-  int q0 = start / stride.a[0];
-  int p1 = q0 % stride.a[1] + stride.s[1];
-
-  int skip0 = stride.d[0] - stride.s[0] - stride.a[0];
-  int t0 = stride.s[0] + stride.a[0];
+  int skip0 = stride.outerDim[0] - stride.offset[0] - stride.innerDim[0];
+  int t0 = stride.offset[0] + stride.innerDim[0];
 
   int j = stride.outerCountFromInnerPos(innerPos);
 
   int i = start;
   while (i < end) {
     
-    y[j] = (x[j+1] + x[j-1] + x[j+stride.d[0]] + x[j-stride.d[0]] - 4*x[j]) / (dx*dx); // + x[j+d0] + x[j-d0] - 4*x[j]) / (dx*dx);
+    y[j] = (x[j+1] + x[j-1] + x[j+stride.outerDim[0]] + x[j-stride.outerDim[0]] - 4*x[j]) / (dx*dx); 
     
     ++i;
     if (++j >= t0) {
