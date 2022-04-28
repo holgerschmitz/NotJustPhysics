@@ -6,6 +6,14 @@ struct Array {
   int val[rank];
 };
 
+namespace device {
+  template<typename T>
+  __device__
+  const T& min(const T& a, const T& b) {
+    return (a>b) ? b : a;
+  }
+}
+
 template<int rank>
 struct GridStride {
   int innerDim[rank];
@@ -55,10 +63,7 @@ struct LocalGridIterator {
     nIter = stride.getInnerCount();
     delta = nIter / (blockDim.x * gridDim.x) + 1;
     start = delta*(blockIdx.x * blockDim.x + threadIdx.x);
-    end = start + delta;
-    if (end >= nIter) {
-      end =  nIter;
-    }
+    end = device::min(start + delta, nIter);
 
     int innerPos[2];
     stride.innerPosFromInnerCount(start, innerPos);
@@ -79,12 +84,10 @@ void add(GridStride<2> stride, float dx, float *x, float *y)
 { 
   LocalGridIterator<2> iter(stride);
 
-  int k = 0;
   while (iter.i < iter.end) {
     
     y[iter.j] = (x[iter.j+1] + x[iter.j-1] + x[iter.j+stride.outerDim[0]] + x[iter.j-stride.outerDim[0]] - 4*x[iter.j]) / (dx*dx); 
     
-    ++k;
     ++iter.i;
     if (++iter.j >= iter.t0) {
       iter.j += iter.skip0;
@@ -127,7 +130,7 @@ int main(void)
   // Run kernel on 1M elements on the GPU
   int blockSize = 256;
   int numBlocks = (N + blockSize - 1) / blockSize;
-  add<<<numBlocks, blockSize>>>(stride, dx, x, y);
+  add<<<2, 1>>>(stride, dx, x, y);
 
   // Wait for GPU to finish before accessing on host
   cudaDeviceSynchronize();
