@@ -60,11 +60,13 @@ struct LocalGridIterator {
       end =  nIter;
     }
 
-    skip0 = stride.outerDim[0] - stride.offset[0] - stride.innerDim[0];
-    t0 = stride.offset[0] + stride.innerDim[0];
-
     int innerPos[2];
     stride.innerPosFromInnerCount(start, innerPos);
+
+    skip0 = stride.outerDim[0] - stride.innerDim[0];
+    t0 = stride.offset[0] + stride.innerDim[0]
+      + stride.outerDim[0]*(stride.offset[1] + innerPos[1]);
+
 
     j = stride.outerCountFromInnerPos(innerPos);
     i = start;
@@ -86,6 +88,7 @@ void add(GridStride<2> stride, float dx, float *x, float *y)
     ++iter.i;
     if (++iter.j >= iter.t0) {
       iter.j += iter.skip0 - 1;
+      iter.t0 += stride.innerDim[0];
     }
   }
 }
