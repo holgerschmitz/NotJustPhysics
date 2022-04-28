@@ -82,13 +82,13 @@ void add(GridStride<2> stride, float dx, float *x, float *y)
   int k = 0;
   while (iter.i < iter.end) {
     
-    y[iter.j] = iter.j; // (x[iter.j+1] + x[iter.j-1] + x[iter.j+stride.outerDim[0]] + x[iter.j-stride.outerDim[0]] - 4*x[iter.j]) / (dx*dx); 
+    y[iter.j] = (x[iter.j+1] + x[iter.j-1] + x[iter.j+stride.outerDim[0]] + x[iter.j-stride.outerDim[0]] - 4*x[iter.j]) / (dx*dx); 
     
     ++k;
     ++iter.i;
     if (++iter.j >= iter.t0) {
-      iter.j += iter.skip0 - 1;
-      iter.t0 += stride.innerDim[0];
+      iter.j += iter.skip0;
+      iter.t0 += stride.outerDim[0];
     }
   }
 }
@@ -102,7 +102,7 @@ T testFunc(T x, T y) {
 
 int main(void)
 {
-  int D = 20;
+  int D = 200;
   int N = D*D;
   float *x, *y;
   float dx = float(0.5f/D);
@@ -127,7 +127,7 @@ int main(void)
   // Run kernel on 1M elements on the GPU
   int blockSize = 256;
   int numBlocks = (N + blockSize - 1) / blockSize;
-  add<<<1, 1>>>(stride, dx, x, y);
+  add<<<numBlocks, blockSize>>>(stride, dx, x, y);
 
   // Wait for GPU to finish before accessing on host
   cudaDeviceSynchronize();
