@@ -61,7 +61,7 @@ struct LocalGridIterator {
   __device__
   LocalGridIterator(const GridStride<rank> &stride) {
     nIter = stride.getInnerCount();
-    delta = nIter / (blockDim.x * gridDim.x) + 1;
+    delta = (nIter - 1) / (blockDim.x * gridDim.x) + 1;
     start = delta*(blockIdx.x * blockDim.x + threadIdx.x);
     end = device::min(start + delta, nIter);
 
@@ -69,8 +69,8 @@ struct LocalGridIterator {
     stride.innerPosFromInnerCount(start, innerPos);
 
     skip0 = stride.outerDim[0] - stride.innerDim[0];
-    t0 = stride.offset[0] + stride.innerDim[0]
-      + stride.outerDim[0]*(stride.offset[1] + innerPos[1]);
+    t0 = stride.offset[1] + stride.innerDim[1]
+      + stride.outerDim[1]*(stride.offset[0] + innerPos[0]);
 
 
     j = stride.outerCountFromInnerPos(innerPos);
@@ -83,6 +83,9 @@ __global__
 void add(GridStride<2> stride, float dx, float *x, float *y)
 { 
   LocalGridIterator<2> iter(stride);
+
+  int innerPos[2];
+  stride.innerPosFromInnerCount(iter.start, innerPos);
 
   while (iter.i < iter.end) {
     
@@ -105,7 +108,7 @@ T testFunc(T x, T y) {
 
 int main(void)
 {
-  int D = 200;
+  int D = 20;
   int N = D*D;
   float *x, *y;
   float dx = float(0.5f/D);
@@ -130,7 +133,7 @@ int main(void)
   // Run kernel on 1M elements on the GPU
   int blockSize = 256;
   int numBlocks = (N + blockSize - 1) / blockSize;
-  add<<<2, 1>>>(stride, dx, x, y);
+  add<<<3, 1>>>(stride, dx, x, y);
 
   // Wait for GPU to finish before accessing on host
   cudaDeviceSynchronize();
